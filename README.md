@@ -78,6 +78,10 @@ graph TD
 ![Options Area](assets/options_area.png)
 *Configuration panel with various processing options*
 
+### Repository Selection
+![Repository Selection](assets/repo_selection.png)
+*Interface for selecting and analyzing code repositories*
+
 ### Output Preview
 ![Output Process](assets/output_process.png)
 *Real-time output preview during code processing*
