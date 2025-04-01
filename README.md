@@ -30,12 +30,25 @@ npm start
 
 ### Repository Scanning
 - Identifies files in the repository while respecting `.gitignore` and user-defined exclusion patterns.
-- Generates a directory structure for better visualization.
+- Generates a structured directory tree:
+  - Sorted with directories first, then files
+  - Automatically excludes common build directories
+  - Maintains relative paths for better context
+- Provides detailed repository statistics:
+  - File counts by type and size
+  - List of largest files for optimization
+  - Skipped files tracking based on filters
+  - Size statistics in human-readable format
+  - Extension-based file categorization
 
 ### File Processing
 - Removes comments and empty lines from code files.
 - Performs security checks to redact sensitive information like API keys and private keys.
 - Supports token counting for AI model compatibility.
+- Minifies code with advanced optimizations:
+  - JavaScript/TypeScript minification with Terser
+  - CSS optimization with property merging and advanced restructuring
+  - HTML compression with attribute optimization and whitespace removal
 
 ### Output Formatting
 - Formats processed files for different LLMs (e.g., ChatGPT, Claude, Perplexity, Gemini).
@@ -82,6 +95,10 @@ graph TD
 - **Remove Comments**: Strip comments from processed code.
 - **Security Checks**: Enable security vulnerability scanning.
 - **Custom Header**: Add custom documentation header.
+- **Code Minification**:
+  - JavaScript/TypeScript: Compress and optimize code
+  - CSS: Advanced optimization with property merging
+  - HTML: Whitespace and attribute optimization
 
 ## Troubleshooting
 
