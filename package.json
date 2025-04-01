@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=development electron .",
-    "start:prod": "cross-env NODE_ENV=production electron .",
+    "start": "cross-env NODE_ENV=development NODE_OPTIONS=--no-deprecation electron .",
+    "start:prod": "cross-env NODE_ENV=production NODE_OPTIONS=--no-deprecation electron .",
     "pack": "cross-env NODE_ENV=production electron-builder --dir",
     "dist": "cross-env NODE_ENV=production electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -20,13 +20,16 @@
   "license": "ISC",
   "description": "A tool that packs your entire repository into a single, AI-friendly file for LLMs like Claude, ChatGPT, and more.",
   "dependencies": {
+    "clean-css": "^5.3.3",
     "electron": "^35.1.2",
     "electron-builder": "^26.0.12",
     "fast-glob": "^3.3.3",
     "fs-extra": "^11.3.0",
     "glob": "^11.0.1",
     "gpt-3-encoder": "^1.1.4",
-    "ignore": "^7.0.3"
+    "html-minifier-terser": "^7.2.0",
+    "ignore": "^7.0.3",
+    "terser": "^5.39.0"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

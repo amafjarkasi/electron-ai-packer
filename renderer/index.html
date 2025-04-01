@@ -145,13 +145,17 @@
                         <p id="repo-path-display" class="mb-2 small text-muted"><strong>Path:</strong> <span></span></p>
                         <hr class="my-2">
                         <div class="row g-2 small">
-                          <div class="col-md-6">
+                          <div class="col-md-4">
                             <p class="mb-1"><i class="fas fa-code me-2"></i><strong>Files to Process:</strong> <span id="files-count">Scanning...</span></p>
                             <p class="mb-1"><i class="fas fa-file-alt me-2"></i><strong>Total Size:</strong> <span id="total-size">Calculating...</span></p>
                           </div>
-                          <div class="col-md-6">
-                            <p class="mb-1"><i class="fas fa-clock me-2"></i><strong>Last Updated:</strong> <span id="last-updated">Checking...</span></p>
-                            <p class="mb-1"><i class="fas fa-code-branch me-2"></i><strong>Branch:</strong> <span id="current-branch">Loading...</span></p>
+                          <div class="col-md-4">
+                            <p class="mb-1"><i class="fas fa-file-code me-2"></i><strong>By Type:</strong> <span id="file-types">Loading...</span></p>
+                            <p class="mb-1"><i class="fas fa-filter me-2"></i><strong>Will Skip:</strong> <span id="skipped-files">Calculating...</span></p>
+                          </div>
+                          <div class="col-md-4">
+                            <p class="mb-1"><i class="fas fa-weight-hanging me-2"></i><strong>Largest Files:</strong></p>
+                            <div id="largest-files" class="small text-muted ps-4">Loading...</div>
                           </div>
                         </div>
                       </div>
@@ -195,7 +199,7 @@
                         <label class="form-label small">Max file size (MB)</label>
                         <div class="input-group input-group-sm">
                           <span class="input-group-text"><i class="fas fa-file-alt"></i></span>
-                          <input type="number" id="max-file-size" class="form-control" value="10" min="0.1" step="0.1" />
+                          <input type="number" id="max-file-size" class="form-control" value="50" min="0.1" step="0.1" />
                         </div>
                       </div>
 
@@ -238,6 +242,26 @@
                           </div>
                         </div>
                       </div>
+                      <div class="row g-2 mt-2">
+                        <div class="col-md-4">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="minify-code" />
+                            <label class="form-check-label small" for="minify-code">Minify JavaScript</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="minify-html" checked />
+                            <label class="form-check-label small" for="minify-html">Minify HTML</label>
+                          </div>
+                        </div>
+                        <div class="col-md-4">
+                          <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="minify-css" checked />
+                            <label class="form-check-label small" for="minify-css">Minify CSS</label>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -247,7 +271,14 @@
               <div class="tab-pane fade" id="filters-content" role="tabpanel" aria-labelledby="filters-tab">
                 <div class="card">
                   <div class="card-body">
-                    <label class="form-label small">Exclude patterns (one per line)</label>
+                    <div class="mb-3">
+                      <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="show-default-patterns" />
+                        <label class="form-check-label small" for="show-default-patterns">Show default excluded patterns</label>
+                      </div>
+                      <textarea id="default-patterns" class="form-control mt-2 d-none" rows="4" readonly></textarea>
+                    </div>
+                    <label class="form-label small">Additional exclude patterns (one per line)</label>
                     <textarea id="exclude-patterns" class="form-control" rows="6" placeholder="e.g. *.jpg&#10;*.png&#10;dist/**/*"></textarea>
                     <div class="form-text small mt-1">Files matching these patterns will be excluded (in addition to .gitignore)</div>
                   </div>
@@ -293,6 +324,9 @@
                         </button>
                         <button id="save-btn" class="btn btn-outline-primary">
                           <i class="fas fa-save me-1"></i>Save
+                        </button>
+                        <button id="clear-btn" class="btn btn-outline-danger">
+                          <i class="fas fa-times me-1"></i>Clear
                         </button>
                       </div>
                     </div>

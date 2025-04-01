@@ -84,26 +84,44 @@ ipcMain.handle('select-directory', async () => {
 // Get basic stats about the repository
 ipcMain.handle('get-basic-stats', async (event, dirPath) => {
   try {
-    let fileCount = 0;
-    let totalSize = 0;
+    // Use repo-scanner to get detailed stats
+    // Get exclude patterns from .gitignore
+    const gitignorePath = path.join(dirPath, '.gitignore');
+    let excludePatterns = [];
+    if (await fs.pathExists(gitignorePath)) {
+      const gitignoreContent = await fs.readFile(gitignorePath, 'utf8');
+      excludePatterns = gitignoreContent.split('\n')
+        .map(line => line.trim())
+        .filter(line => line && !line.startsWith('#'));
+    }
 
-    // Recursively get all files
-    const getFiles = async (dir) => {
-      const items = await fs.readdir(dir);
-      for (const item of items) {
-        const fullPath = path.join(dir, item);
-        const stat = await fs.stat(fullPath);
-        if (stat.isDirectory()) {
-          await getFiles(fullPath);
-        } else {
-          fileCount++;
-          totalSize += stat.size;
-        }
-      }
+    const scanResult = await repoScanner.scanRepository(dirPath, {
+      maxFileSize: 50, // Default max file size of 50MB
+      excludePatterns: excludePatterns // Use patterns from .gitignore
+    });
+
+    // Get file statistics
+    const stats = scanResult.stats;
+    
+    // Format file types for display
+    const fileTypes = {};
+    Object.entries(stats.byExtension).forEach(([ext, data]) => {
+      // Skip empty extension
+      if (ext === 'no-extension') return;
+      // Format as "5 .js" etc
+      fileTypes[ext] = data.count;
+    });
+
+    return {
+      fileCount: stats.totalFiles,
+      totalSize: stats.totalSize,
+      fileTypes,
+      skippedFiles: scanResult.files.length - stats.totalFiles,
+      largestFiles: stats.largestFiles.map(f => ({
+        name: path.basename(f.path),
+        size: repoScanner.formatBytes(f.size)
+      }))
     };
-
-    await getFiles(dirPath);
-    return { fileCount, totalSize };
   } catch (error) {
     console.error('Error getting basic stats:', error);
     throw error;

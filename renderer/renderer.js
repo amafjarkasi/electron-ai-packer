@@ -28,6 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
       repoInfo: document.getElementById('repo-info'),
       repoName: document.getElementById('repo-name'),
       repoPathDisplay: document.getElementById('repo-path-display'),
+      fileTypes: document.getElementById('file-types'),
+      skippedFiles: document.getElementById('skipped-files'),
 
       // Options
       maxFileSize: document.getElementById('max-file-size'),
@@ -37,7 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
       securityCheck: document.getElementById('security-check'),
       customHeader: document.getElementById('custom-header'),
       llmTarget: document.getElementById('llm-target'),
-
+      minifyCode: document.getElementById('minify-code'),
+      minifyHTML: document.getElementById('minify-html'),
+      minifyCSS: document.getElementById('minify-css'),
+      showDefaultPatterns: document.getElementById('show-default-patterns'),
+      defaultPatterns: document.getElementById('default-patterns'),
+      
       // Process and Output
       processBtn: document.getElementById('process-btn'),
       progressCard: document.getElementById('progress-card'),
@@ -49,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       outputPreview: document.getElementById('output-preview'),
       copyBtn: document.getElementById('copy-btn'),
       saveBtn: document.getElementById('save-btn'),
+      clearBtn: document.getElementById('clear-btn'),
 
       // Notifications
       toast: document.getElementById('toast'),
@@ -110,6 +118,35 @@ function registerEventListeners() {
   });
   
   // Initialize tabs
+  // Initialize default patterns
+  const defaultExcludePatterns = [
+    '# Binary files',
+    '*.jpg', '*.jpeg', '*.png', '*.gif', '*.ico', '*.webp',
+    '*.mp3', '*.wav', '*.mp4', '*.webm', '*.avi',
+    '*.zip', '*.rar', '*.7z', '*.tar', '*.gz',
+    '*.pdf', '*.doc', '*.docx', '*.xls', '*.xlsx',
+    '*.exe', '*.dll', '*.so', '*.dylib',
+    '*.ttf', '*.otf', '*.woff', '*.woff2',
+    '*.pyc', '*.class', '*.o', '*.obj',
+    '*.db', '*.sqlite',
+    '',
+    '# Common directories',
+    'node_modules/**/*',
+    'dist/**/*',
+    'build/**/*',
+    'coverage/**/*',
+    '.git/**/*',
+    '.idea/**/*',
+    '.vscode/**/*'
+  ].join('\n');
+
+  elements.defaultPatterns.value = defaultExcludePatterns;
+
+  // Add event listener for showing/hiding default patterns
+  elements.showDefaultPatterns.addEventListener('change', (e) => {
+    elements.defaultPatterns.classList.toggle('d-none', !e.target.checked);
+  });
+
   if (document.querySelector('#options-tabs')) {
     const tabElements = document.querySelectorAll('#options-tabs .nav-link');
     tabElements.forEach(tab => {
@@ -151,6 +188,12 @@ function registerEventListeners() {
   if (!elements.saveBtn._hasListener) {
     elements.saveBtn.addEventListener('click', saveOutputToFile);
     elements.saveBtn._hasListener = true;
+  }
+  
+  // Add clear button functionality
+  if (!elements.clearBtn._hasListener) {
+    elements.clearBtn.addEventListener('click', clearOutput);
+    elements.clearBtn._hasListener = true;
   }
 }
 
@@ -225,20 +268,50 @@ async function selectRepository() {
       // Show repository info
       elements.repoInfo.classList.remove('d-none');
       
-      // Get basic file stats
       try {
+        // Get basic stats
         const stats = await window.electronAPI.getBasicStats(path);
-        document.getElementById('files-count').textContent = `${stats.fileCount} files`;
-        document.getElementById('total-size').textContent = `${(stats.totalSize / (1024 * 1024)).toFixed(2)} MB`;
+        
+        // Update file count
+        document.getElementById('files-count').textContent = stats.fileCount ?
+          `${stats.fileCount.toLocaleString()} files` : 'Unknown';
+        
+        // Update total size
+        document.getElementById('total-size').textContent = stats.totalSize ?
+          `${(stats.totalSize / (1024 * 1024)).toFixed(2)} MB` : 'Unknown';
+
+        // Update file types with better formatting
+        const fileTypeText = stats.fileTypes ?
+          Object.entries(stats.fileTypes)
+            .sort((a, b) => b[1] - a[1]) // Sort by count
+            .slice(0, 3) // Take top 3
+            .map(([ext, count]) => `${count.toLocaleString()}${ext}`)
+            .join(', ') + (Object.keys(stats.fileTypes).length > 3 ? '...' : '') : 'N/A';
+        elements.fileTypes.textContent = fileTypeText;
+
+        // Update skipped files with better formatting
+        const skippedCount = stats.skippedFiles || 0;
+        elements.skippedFiles.textContent = skippedCount > 0 ?
+          `${skippedCount.toLocaleString()} files` : 'None';
+
+        // Update largest files list
+        if (stats.largestFiles && stats.largestFiles.length > 0) {
+          const largestFilesText = stats.largestFiles
+            .slice(0, 3)
+            .map(f => `${f.name} (${f.size})`)
+            .join('<br>');
+          document.getElementById('largest-files').innerHTML = largestFilesText;
+        } else {
+          document.getElementById('largest-files').textContent = 'N/A';
+        }
       } catch (statsError) {
-        console.warn('Could not get file stats:', statsError);
+        console.warn('Could not get stats:', statsError);
         document.getElementById('files-count').textContent = 'Unknown';
         document.getElementById('total-size').textContent = 'Unknown';
+        elements.fileTypes.textContent = 'N/A';
+        elements.skippedFiles.textContent = 'N/A';
       }
-      
-      document.getElementById('last-updated').textContent = new Date().toLocaleDateString();
-      document.getElementById('current-branch').textContent = 'main';
-      
+
       // Enable process button
       elements.processBtn.disabled = false;
       
@@ -279,6 +352,9 @@ async function processRepository() {
       removeComments: elements.removeComments.checked,
       removeEmptyLines: elements.removeEmptyLines.checked,
       securityCheck: elements.securityCheck.checked,
+      minifyCode: elements.minifyCode.checked,
+      minifyHTML: elements.minifyHTML.checked,
+      minifyCSS: elements.minifyCSS.checked,
       customHeader: elements.customHeader.value.trim(),
       repoPath: state.repoPath,
       repositoryName: elements.repoName.textContent
@@ -430,4 +506,41 @@ function showToast(title, message, isError = false) {
   setTimeout(() => {
     elements.toast.style.display = 'none';
   }, 3000);
+}
+
+// Define the clearOutput function
+function clearOutput() {
+  // Reset state
+  state.output = null;
+  state.processing = false;
+
+  // Clear repository info
+  elements.repoPath.value = '';
+  elements.repoName.textContent = '';
+  elements.repoPathDisplay.textContent = '';
+  elements.repoInfo.classList.add('d-none');
+
+  // Clear output preview and stats
+  elements.outputPreview.textContent = '';
+  elements.outputStats.textContent = '';
+
+  // Reset progress indicators
+  elements.progressBar.style.width = '0%';
+  elements.progressBar.setAttribute('aria-valuenow', 0);
+  elements.progressMessage.textContent = '';
+  elements.progressDetails.textContent = '';
+  elements.progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
+
+  // Hide progress card and show output card
+  elements.progressCard.classList.add('d-none');
+  elements.outputCard.classList.remove('d-none');
+
+  // Reset process button
+  elements.processBtn.disabled = true;
+
+  // Navigate back to repository section
+  navigateToSection('repo-section');
+
+  // Show toast notification
+  showToast('Cleared', 'Output and repository selection have been reset');
 }

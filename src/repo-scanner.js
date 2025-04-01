@@ -86,7 +86,7 @@ async function scanRepository(repoPath, options, progressCallback = null) {
     }
     
     // Get file stats
-    const stats = await fs.stat(file);
+    const stats = await fs.lstat(file);
     
     // Skip if file is too large
     if (options.maxFileSize && stats.size > options.maxFileSize * 1024 * 1024) {

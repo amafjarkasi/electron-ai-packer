@@ -4,7 +4,10 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const { encode } = require('gpt-3-encoder'); // Add this dependency for token counting
+const { encode } = require('gpt-3-encoder');
+const { minify } = require('terser');
+const htmlMinifier = require('html-minifier-terser');
+const CleanCSS = require('clean-css');
 
 /**
  * Process a list of files and generate output
@@ -24,8 +27,7 @@ async function processFiles(files, options, progressCallback = null) {
       processingOptions: {
         removeComments: options.removeComments || false,
         removeEmptyLines: options.removeEmptyLines || false,
-        securityCheck: options.securityCheck || false,
-        maxFileSize: options.maxFileSize || 1
+        securityCheck: options.securityCheck || false
       },
       customHeader: options.customHeader || '',
       metrics: {
@@ -79,6 +81,56 @@ async function processFiles(files, options, progressCallback = null) {
       if (options.securityCheck) {
         content = performSecurityCheck(content, file.extension);
       }
+      
+      // Apply minification based on file type if enabled
+      if (options.minifyCode && (file.extension === '.js' || file.extension === '.jsx' || file.extension === '.ts' || file.extension === '.tsx')) {
+        try {
+          content = await minifyJavaScript(content, file.path);
+          if (progressCallback) {
+            progressCallback({
+              status: 'processing',
+              progress: 30 + Math.floor(50 * (i / files.length)),
+              message: `Minifying ${i + 1}/${files.length}`,
+              details: file.relativePath
+            });
+          }
+        } catch (minifyError) {
+          console.warn(`Minification error for ${file.path}: ${minifyError.message}`);
+        }
+      }
+      // CSS files
+      else if (options.minifyCSS && file.extension === '.css') {
+        try {
+          content = await minifyContent(content, file.path, 'css');
+          if (progressCallback) {
+            progressCallback({
+              status: 'processing',
+              progress: 30 + Math.floor(50 * (i / files.length)),
+              message: `Minifying CSS ${i + 1}/${files.length}`,
+              details: file.relativePath
+            });
+          }
+        } catch (minifyError) {
+          console.warn(`CSS minification error for ${file.path}: ${minifyError.message}`);
+        }
+      }
+      // HTML files
+      else if (options.minifyHTML && (file.extension === '.html' || file.extension === '.htm')) {
+        try {
+          content = await minifyContent(content, file.path, 'html');
+          if (progressCallback) {
+            progressCallback({
+              status: 'processing',
+              progress: 30 + Math.floor(50 * (i / files.length)),
+              message: `Minifying HTML ${i + 1}/${files.length}`,
+              details: file.relativePath
+            });
+          }
+        } catch (minifyError) {
+          console.warn(`HTML minification error for ${file.path}: ${minifyError.message}`);
+        }
+      }
+      
       
       // Count tokens and characters
       const tokenCount = countTokens(content);
@@ -201,6 +253,161 @@ function truncateContent(content, maxSize = 100000) {
   return content.substring(0, halfSize) + 
     `\n\n... [Content truncated, ${content.length - maxSize} characters omitted] ...\n\n` +
     content.substring(content.length - halfSize);
+}
+
+/**
+ * Minify JavaScript code
+ * @param {string} content - JavaScript file content
+ * @returns {Promise<string>} Minified JavaScript
+ */
+async function minifyJavaScript(content, filePath = 'unknown') {
+  // Skip if content is empty or already marked as binary/skipped
+  if (!content || content.startsWith('[Binary') || content.startsWith('[Skipped')) {
+    return content;
+  }
+
+  try {
+    // Attempt minification with terser
+    const result = await minify(content, {
+      parse: {
+        bare_returns: true
+      },
+      compress: {
+        defaults: true,
+        arrows: true,
+        arguments: true,
+        booleans: true,
+        collapse_vars: true,
+        comparisons: true,
+        conditionals: true,
+        dead_code: true,
+        directives: true,
+        drop_console: false,
+        evaluate: true,
+        hoist_funs: true,
+        hoist_props: true,
+        hoist_vars: false,
+        if_return: true,
+        inline: true,
+        join_vars: true,
+        keep_classnames: true,
+        keep_fargs: true,
+        keep_fnames: true,
+        keep_infinity: true,
+        loops: true,
+        negate_iife: false,
+        properties: true,
+        reduce_funcs: true,
+        reduce_vars: true,
+        sequences: true,
+        side_effects: true,
+        switches: true,
+        toplevel: false,
+        typeofs: true,
+        unused: true,
+        passes: 2
+      },
+      mangle: {
+        keep_classnames: true,
+        keep_fnames: true,
+        reserved: ['require', 'module', 'exports']
+      },
+      module: true,
+      sourceMap: false,
+      format: {
+        ascii_only: false,
+        beautify: false,
+        comments: false,
+        indent_level: 2,
+        keep_quoted_props: true,
+        max_line_len: false,
+        semicolons: true
+      }
+    });
+
+    if (!result || !result.code) {
+      console.warn(`No output generated for ${filePath}`);
+      return content;
+    }
+
+    return result.code;
+  } catch (error) {
+    console.warn(`Error minifying JavaScript for ${filePath}: ${error.message}`);
+    // Return original content on error
+    return content;
+  }
+}
+
+/**
+ * Check if JavaScript content has a return statement outside of a function
+ * @param {string} content - JavaScript content to check
+ * @returns {boolean} Whether there's a return outside of function
+ */
+function hasReturnOutsideFunction(content) {
+  let inFunction = 0;
+  let inComment = false;
+  let inString = false;
+  let stringChar = '';
+  let prevChar = '';
+  let bracketStack = [];
+  
+  const lines = content.split('\n');
+  
+  // First pass: find all function declarations and their ranges
+  const functionRanges = [];
+  let currentFunction = null;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Skip empty lines and comments
+    if (!line || line.startsWith('//')) continue;
+    
+    // Check for function declarations
+    if (line.includes('function') || /=>\s*{?\s*$/.test(line)) {
+      currentFunction = { start: i };
+    }
+    
+    // Track opening and closing braces
+    const openBraces = (line.match(/{/g) || []).length;
+    const closeBraces = (line.match(/}/g) || []).length;
+    
+    if (currentFunction) {
+      if (openBraces > closeBraces) {
+        if (!currentFunction.depth) currentFunction.depth = 0;
+        currentFunction.depth += openBraces - closeBraces;
+      } else if (closeBraces > openBraces) {
+        if (!currentFunction.depth) currentFunction.depth = 0;
+        currentFunction.depth -= closeBraces - openBraces;
+        if (currentFunction.depth <= 0) {
+          currentFunction.end = i;
+          functionRanges.push({ ...currentFunction });
+          currentFunction = null;
+        }
+      }
+    }
+  }
+  
+  // Second pass: check for returns outside these ranges
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Skip empty lines and comments
+    if (!line || line.startsWith('//')) continue;
+    
+    // Check if this line is within any function range
+    const isInFunction = functionRanges.some(range =>
+      i >= range.start && i <= range.end
+    );
+    
+    // If we find a return and we're not in a function, it's an issue
+    if (!isInFunction && /^return\s/.test(line)) {
+      console.log(`Found return outside function at line ${i+1}: "${line}"`);
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 /**
@@ -369,6 +576,87 @@ function countTokens(text) {
     return 0;
   }
 }
+/**
+ * Minify CSS/HTML code using the minify package
+ * @param {string} content - File content
+ * @param {string} filePath - Path to the file
+ * @param {string} type - File type ('css' or 'html')
+ * @returns {Promise<string>} Minified content
+ */
+async function minifyContent(content, filePath = 'unknown', type) {
+  // Skip if content is empty or already marked as binary/skipped
+  if (!content || content.startsWith('[Binary') || content.startsWith('[Skipped')) {
+    return content;
+  }
+
+  try {
+    if (type === 'html') {
+      const result = await htmlMinifier.minify(content, {
+        collapseWhitespace: true,
+        removeComments: true,
+        removeEmptyAttributes: true,
+        removeRedundantAttributes: true,
+        removeScriptTypeAttributes: true,
+        removeStyleLinkTypeAttributes: true,
+        minifyCSS: true,
+        minifyJS: true,
+        processConditionalComments: true,
+        caseSensitive: true,
+        collapseBooleanAttributes: true,
+        keepClosingSlash: true,
+        removeAttributeQuotes: false,
+        removeOptionalTags: false,
+        sortAttributes: true,
+        sortClassName: true,
+        useShortDoctype: true,
+        minifyURLs: true
+      });
+      return result || content;
+    } else if (type === 'css') {
+      const cleanCSS = new CleanCSS({
+        level: {
+          1: {
+            all: true,
+            normalizeUrls: false,
+            optimizeBackground: true,
+            optimizeBorderRadius: true,
+            optimizeFilter: true,
+            optimizeFontWeight: true,
+            optimizeOutline: true,
+            removeEmpty: true,
+            removeWhitespace: true,
+            replaceMultipleZeros: true,
+            replaceTimeUnits: true,
+            replaceZeroUnits: true,
+            roundingPrecision: 3
+          },
+          2: {
+            mergeAdjacentRules: true,
+            mergeIntoShorthands: true,
+            mergeMedia: true,
+            mergeNonAdjacentRules: true,
+            mergeSemantically: false,
+            overrideProperties: true,
+            removeEmpty: true,
+            reduceNonAdjacentRules: true,
+            removeDuplicateFontRules: true,
+            removeDuplicateMediaBlocks: true,
+            removeDuplicateRules: true,
+            removeUnusedAtRules: false,
+            restructureRules: true
+          }
+        }
+      });
+      const result = cleanCSS.minify(content);
+      return result.styles || content;
+    }
+    return content;
+  } catch (error) {
+    console.warn(`Error minifying ${type} for ${filePath}: ${error.message}`);
+    return content;
+  }
+}
+
 
 module.exports = {
   processFiles,
@@ -376,6 +664,8 @@ module.exports = {
   shouldSkipFile,
   isBinaryExtension,
   truncateContent,
+  minifyJavaScript,
+  minifyContent,
   removeComments,
   removeEmptyLines,
   performSecurityCheck,
