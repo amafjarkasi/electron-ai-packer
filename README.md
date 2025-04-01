@@ -1,12 +1,6 @@
-# Electron AI Packer 🚀
+# Electron AI Packer
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/amafjarkasi/electron-ai-packer/actions/workflows/ci.yml/badge.svg)](https://github.com/amafjarkasi/electron-ai-packer/actions)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
-[![GitHub Stars](https://img.shields.io/github/stars/amafjarkasi/electron-ai-packer?style=social)](https://github.com/amafjarkasi/electron-ai-packer/stargazers)
-[![GitHub Issues](https://img.shields.io/github/issues/amafjarkasi/electron-ai-packer)](https://github.com/amafjarkasi/electron-ai-packer/issues)
-
-**Electron AI Packer** is a cutting-edge desktop application that revolutionizes code repository management through AI-powered analysis and optimization. Built with Electron for seamless cross-platform compatibility, it offers developers an intuitive interface for handling complex codebases with ease.
+**Electron AI Packer** is a desktop application for AI-powered code repository analysis and optimization. Built with Electron for cross-platform compatibility, it provides an intuitive interface for managing complex codebases.
 
 ## ✨ Key Highlights
 
