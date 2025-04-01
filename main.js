@@ -180,9 +180,13 @@ ipcMain.on('send-content-height', (event, height) => {
   }
 });
 ipcMain.handle('save-output', async (event, content) => {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // Format timestamp
+  const repoName = content.match(/Repository: (.+)/)?.[1] || 'repository'; // Extract repository name from content
+  const defaultFilename = `${repoName}-packed-${timestamp}.txt`;
+
   const result = await dialog.showSaveDialog(mainWindow, {
     title: 'Save Packed Repository',
-    defaultPath: 'repository-packed.txt',
+    defaultPath: defaultFilename,
     filters: [
       { name: 'Text Files', extensions: ['txt'] },
       { name: 'Markdown Files', extensions: ['md'] },

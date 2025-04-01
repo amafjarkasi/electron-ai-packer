@@ -4,7 +4,7 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const glob = require('glob');
+const fg = require('fast-glob');
 const ignore = require('ignore');
 
 /**
@@ -57,11 +57,11 @@ async function scanRepository(repoPath, options, progressCallback = null) {
     });
   }
 
-  // Get all files in the repository using sync version
-  const files = glob.sync('**/*', {
+  // Get all files in the repository using fast-glob
+  const files = await fg('**/*', {
     cwd: repoPath,
     dot: true,
-    nodir: true,
+    onlyFiles: true,
     absolute: true
   });
 

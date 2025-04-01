@@ -125,3 +125,11 @@ We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Recent Updates
+
+### Specific Output File Naming
+- Output files are now saved with a name that includes the repository name and a timestamp for better organization and traceability.
+
+### Improved User Experience
+- Canceling the save dialog for output files no longer triggers an error toast, ensuring a smoother user experience.
