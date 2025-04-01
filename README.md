@@ -1,14 +1,14 @@
 # Electron AI Packer
 
-**Electron AI Packer** is a desktop application for AI-powered code repository analysis and optimization. Built with Electron for cross-platform compatibility, it provides an intuitive interface for managing complex codebases.
+**Electron AI Packer** is a desktop application for processing and packaging code repositories into AI-friendly formats. Built with Electron for cross-platform compatibility, it provides an intuitive interface for managing repository processing tasks.
 
 ## ✨ Key Highlights
 
-- 🧠 **AI-Powered Code Analysis**: Leverage state-of-the-art AI models for deep code understanding
-- 🖥️ **Cross-Platform Support**: Native experience on Windows, macOS, and Linux
-- ⚙️ **Customizable Workflows**: Tailor the processing pipeline to your specific needs
-- 🔍 **Comprehensive Code Insights**: Get detailed metrics and optimization suggestions
-- 📦 **Efficient Packaging**: Create optimized code packages for deployment
+- 📂 **Repository Scanning**: Scans repositories to identify files, apply filters, and generate a directory structure.
+- 🛠️ **File Processing**: Supports options like removing comments, removing empty lines, and performing security checks to sanitize files.
+- 📜 **Output Formatting**: Formats processed repositories for various LLMs, including ChatGPT, Claude, and others.
+- 🖥️ **User-Friendly Interface**: Provides an intuitive UI for selecting repositories, configuring options, and viewing/saving output.
+- 🔍 **Customizable Options**: Allows users to set file size limits, exclude patterns, and add custom headers for output files.
 
 ## 🚀 Quick Start
 
@@ -28,95 +28,73 @@ npm start
 
 ## 🛠️ Core Features
 
-### AI-Powered Analysis
-- Code structure analysis
-- Dependency mapping
-- Code quality assessment
-- Security vulnerability detection
+### Repository Scanning
+- Identifies files in the repository while respecting `.gitignore` and user-defined exclusion patterns.
+- Generates a directory structure for better visualization.
 
-### Repository Management
-- Multi-repository support
-- Version control integration
-- Custom exclusion patterns
-- File type recognition
+### File Processing
+- Removes comments and empty lines from code files.
+- Performs security checks to redact sensitive information like API keys and private keys.
+- Supports token counting for AI model compatibility.
 
-### Output Generation
-- Customizable templates
-- Documentation generation
-- Code summarization
-- Export options (Markdown, HTML, PDF)
+### Output Formatting
+- Formats processed files for different LLMs (e.g., ChatGPT, Claude, Perplexity, Gemini).
+- Includes options for adding custom headers and repository descriptions.
+
+### User Interface
+- Simple navigation with tabs for repository selection, options configuration, and output viewing.
+- Real-time progress updates during processing.
+- Options to copy output to the clipboard or save it to a file.
 
 ## 📊 System Architecture
 
 ```mermaid
 graph TD
     A[Main Process] --> B[Renderer Process]
-    B --> C[AI Engine]
-    C --> D[Code Analyzer]
-    C --> E[Security Scanner]
-    C --> F[Optimizer]
-    D --> G[Output Generator]
-    E --> G
-    F --> G
+    B --> C[Repository Scanner]
+    B --> D[File Processor]
+    B --> E[Output Formatter]
 ```
-
-## 🧩 Technology Stack
-
-- **Frontend**: Electron, React
-- **Backend**: Node.js
-- **AI Engine**: TensorFlow.js, Natural Language Processing
-- **Database**: SQLite (local storage)
-- **Build Tools**: Webpack, Babel
 
 ## 📸 Screenshots
 
 ### Main Interface
 ![Home Screen](assets/home_screen.png)
-*The main interface showing repository selection and basic controls*
+*The main interface showing repository selection and basic controls.*
 
 ### Processing Options
 ![Options Area](assets/options_area.png)
-*Configuration panel with various processing options*
+*Configuration panel with various processing options.*
 
 ### Repository Selection
 ![Repository Selection](assets/repo_selection.png)
-*Interface for selecting and analyzing code repositories*
+*Interface for selecting and analyzing code repositories.*
 
 ### Output Preview
 ![Output Process](assets/output_process.png)
-*Real-time output preview during code processing*
+*Real-time output preview during code processing.*
 
 ## Configuration
 
 ### Processing Options
-- **Max File Size**: Set maximum file size to process (default: 1MB)
-- **Exclude Patterns**: List of file patterns to exclude
-- **Remove Comments**: Strip comments from processed code
-- **Security Checks**: Enable security vulnerability scanning
-- **Custom Header**: Add custom documentation header
-
-### AI Settings
-- **Model Selection**: Choose between different AI models
-- **Context Window**: Adjust AI context memory size
-- **Temperature**: Control AI creativity level
+- **Max File Size**: Set maximum file size to process (default: 10MB).
+- **Exclude Patterns**: List of file patterns to exclude.
+- **Remove Comments**: Strip comments from processed code.
+- **Security Checks**: Enable security vulnerability scanning.
+- **Custom Header**: Add custom documentation header.
 
 ## Troubleshooting
 
 ### Common Issues
 **Slow Processing:**
-- Reduce max file size
-- Exclude large binary files
-- Close other resource-intensive applications
-
-**AI Output Quality:**
-- Increase context window size
-- Adjust temperature setting
-- Provide more specific instructions
+- Reduce max file size.
+- Exclude large binary files.
+- Close other resource-intensive applications.
 
 **Application Crashes:**
-- Ensure you have the latest version
-- Check system requirements
-- Verify sufficient disk space
+- Ensure you have the latest version.
+- Check system requirements.
+- Verify sufficient disk space.
 
 ## 🤝 Contributing
 
@@ -125,11 +103,3 @@ We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Recent Updates
-
-### Specific Output File Naming
-- Output files are now saved with a name that includes the repository name and a timestamp for better organization and traceability.
-
-### Improved User Experience
-- Canceling the save dialog for output files no longer triggers an error toast, ensuring a smoother user experience.
