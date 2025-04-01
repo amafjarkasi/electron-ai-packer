@@ -1,6 +1,6 @@
 # Electron AI Code Packer
 
-**Electron AI Code Packer** is a desktop application for processing and packaging code repositories into AI-friendly formats. Built with Electron for cross-platform compatibility, it provides an intuitive interface for managing repository processing tasks.
+**Electron AI Code Packer** is an Electron-based AI-powered code repository analyzer and packer. It provides an intuitive interface for analyzing, processing, and packaging code repositories into AI-friendly formats with advanced features like code minification and detailed repository statistics.
 
 ## ✨ Key Highlights
 

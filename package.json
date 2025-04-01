@@ -18,7 +18,7 @@
   ],
   "author": "",
   "license": "ISC",
-  "description": "A tool that packs your entire repository into a single, AI-friendly file for LLMs like Claude, ChatGPT, and more.",
+  "description": "Electron-based AI-powered code repository analyzer and packer",
   "dependencies": {
     "clean-css": "^5.3.3",
     "electron": "^35.1.2",
